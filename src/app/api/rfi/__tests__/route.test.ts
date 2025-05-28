@@ -1,8 +1,17 @@
-import { createMocks } from "node-mocks-http";
 import { POST } from "../route";
 
+jest.mock("next/server", () => {
+  const original = jest.requireActual("next/server");
+  return {
+    ...original,
+    NextResponse: {
+      json: (body: any, init?: any) => ({ status: init?.status ?? 200, body }),
+    },
+  };
+});
+
 // Mock the Supabase client
-jest.mock("@/supabase/server", () => ({
+jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn().mockImplementation(() => ({
     auth: {
       getSession: jest.fn().mockResolvedValue({
@@ -24,43 +33,34 @@ jest.mock("@/supabase/server", () => ({
   })),
 }));
 
+const call = async (body: unknown) =>
+  POST(
+    new Request("http://localhost/api/rfi", {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }) as any,
+  );
+
 describe("/api/rfi POST endpoint", () => {
   it("should return 400 when title is empty", async () => {
-    const { req, res } = createMocks({
-      method: "POST",
-      body: { title: "" },
-    });
-
-    await POST(req);
-
-    expect(res._getStatusCode()).toBe(400);
-    const data = JSON.parse(res._getData());
-    expect(data.error).toBe("Validation error");
+    const res = await call({ title: "" });
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("Validation error");
   });
 
   it("should return 400 when title is missing", async () => {
-    const { req, res } = createMocks({
-      method: "POST",
-      body: {},
-    });
-
-    await POST(req);
-
-    expect(res._getStatusCode()).toBe(400);
-    const data = JSON.parse(res._getData());
-    expect(data.error).toBe("Validation error");
+    const res = await call({});
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.error).toBe("Validation error");
   });
 
   it("should return 201 with valid data", async () => {
-    const { req, res } = createMocks({
-      method: "POST",
-      body: { title: "Test RFI" },
-    });
-
-    await POST(req);
-
-    expect(res._getStatusCode()).toBe(201);
-    const data = JSON.parse(res._getData());
-    expect(data.title).toBe("Test RFI");
+    const res = await call({ title: "Test RFI" });
+    expect(res.status).toBe(201);
+    const json = await res.json();
+    expect(json.title).toBe("Test RFI");
   });
 });

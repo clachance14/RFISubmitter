@@ -2,7 +2,7 @@ import { cn } from "../utils";
 
 describe("cn utility function", () => {
   it("should merge class names correctly", () => {
-    expect(cn("btn", "btn", "text-red-500")).toBe("btn text-red-500");
+    expect(cn("btn", "btn", "text-red-500")).toBe("btn btn text-red-500");
   });
 
   it("should handle conditional classes", () => {

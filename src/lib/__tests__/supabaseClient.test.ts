@@ -1,6 +1,6 @@
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
-jest.mock("@/supabase/server", () => ({
+jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn().mockReturnValue({
     from: jest.fn(),
   }),
